@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+#include <ctype.h>
+
+/*
+* Projeto para venda de ingressos de teatro 
+* Análise e desenvolvimento de sistemas
+*/
+
+int main(void)
+{
+    setlocale(LC_ALL, "Portuguese");
+    
+    // Declaração das variáveis
+    int j, peca, sem, valor, numIng, valorIngresso, i;
+    char desconto, compra, novaCompra;
+    char cpeca[3], csem[3];
+    char *semana, *nomePeca;
+    char caminho[50] = "";
+    char arquivo[] = "BancoDados.txt";
+    char pArq[40][10];
+    char poltEsc[3];
+    FILE *arquivoDados;
+    
+    while (1) {
+        system("cls"); // Em sistemas Unix/Linux, use printf("\033[H\033[J");
+        printf("|----------=Bem vindo ao teatro SJC!!!=----------|\n");
+        printf("| 1 - Shakespeare | 2 - Musical da Broadway |\n");
+        printf("Digite o número referente à peça: ");
+        scanf("%d", &peca);
+    
+        if (peca == 1) nomePeca = "Shakespeare ";
+        else if (peca == 2) nomePeca = "Musical da Broadway";
+        else {
+            printf("Opção inválida!\n");
+            continue;
+        }
+    
+        system("cls");
+        printf("Escolha um dia da semana (1 a 7): ");
+        scanf("%d", &sem);
+    
+        char *dias[] = {"Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"};
+        if (sem < 1 || sem > 7) {
+            printf("Dia inválido!\n");
+            continue;
+        }
+    
+        semana = dias[sem - 1];
+    
+        sprintf(caminho, "%d%d%s", peca, sem, arquivo);
+    
+        arquivoDados = fopen(caminho, "r");
+        if (!arquivoDados) {
+            printf("Arquivo não encontrado!\n");
+            continue;
+        }
+    
+        for (j = 0; j < 40; j++) {
+            fscanf(arquivoDados, "%s", pArq[j]);
+        }
+        fscanf(arquivoDados, "%d %d", &valor, &numIng);
+        fclose(arquivoDados);
+    
+        if (numIng >= 40) {
+            printf("Ingressos esgotados para esta data!\n");
+            continue;
+        }
+    
+        printf("Escolha uma poltrona: ");
+        scanf("%s", poltEsc);
+    
+        int disponivel = 0;
+        for (j = 0; j < 40; j++) {
+            if (strcmp(strupr(poltEsc), pArq[j]) == 0) {
+                disponivel = 1;
+                strcpy(pArq[j], "xx");
+                break;
+            }
+        }
+    
+        if (!disponivel) {
+            printf("Poltrona indisponível!\n");
+            continue;
+        }
+    
+        printf("Tem direito a desconto? (S/N): ");
+        scanf(" %c", &desconto);
+        valorIngresso = (toupper(desconto) == 'S') ? 50 : 100;
+    
+        printf("Valor do ingresso: R$ %d,00\n", valorIngresso);
+        printf("Confirmar compra? (S/N): ");
+        scanf(" %c", &compra);
+    
+        if (toupper(compra) == 'S') {
+            arquivoDados = fopen(caminho, "w");
+            for (j = 0; j < 40; j++) {
+                fprintf(arquivoDados, "%s ", pArq[j]);
+            }
+            fprintf(arquivoDados, " %d %d", valorIngresso + valor, ++numIng);
+            fclose(arquivoDados);
+    
+            printf("\nCompra realizada com sucesso!\n");
+        } else {
+            printf("Compra cancelada!\n");
+        }
+    
+        printf("Nova compra? (S/N): ");
+        scanf(" %c", &novaCompra);
+        if (toupper(novaCompra) != 'S') break;
+    }
+    
+    return 0;
+}
