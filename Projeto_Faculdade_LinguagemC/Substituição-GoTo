@@ -1,0 +1,149 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+#include <ctype.h>
+
+/*
+* Projeto para venda de ingressos de teatro 
+* Análise e desenvolvimento de sistemas
+*/
+
+int main(void)
+{
+    setlocale(LC_ALL, "Portuguese");
+
+    // Declaração das variáveis
+    int j, peca, sem, valor, numIng, valorIngresso, i, menu;
+    char desconto, compra, novaCompra;
+    char cpeca[3], csem[3];
+    char *semana, *nomePeca;
+    char caminho[30];
+    char arquivo[25] = "BancoDados.txt";
+    char pArq[40][10];
+    char poltEsc[2];
+    FILE *arquivoDados;
+    
+compra:
+    system("cls");
+    // Menu inicial
+    printf("|----------=Bem vindo ao teatro SJC!!!=----------|\n");
+    printf("| -Pecas em cartaz:           |-Dias Disponiveis: |\n");
+    printf("| 1 - Shakespeare           |(Todos os dias)       |\n");
+    printf("| 2 - Musical da Broadway   |(Todos os dias)       |\n");
+    printf("Digite o número referente à peça desejada: ");
+    scanf("%d", &peca);
+    system("cls");
+
+    if (peca == 1) nomePeca = "Shakespeare ";
+    else if (peca == 2) nomePeca = "Musical da Broadway";
+    else {
+        printf("Escolha inválida!\n");
+        exit(1);
+    }
+    
+    // Escolha do dia
+    int sem;  // Variável para o dia da semana
+    while (1) {
+        printf("Escolha um dia da semana (1 a 7): ");
+        scanf("%d", &sem);
+        char *dias[] = {"Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"};
+        if (sem < 1 || sem > 7) {
+            printf("Dia inválido!\n");
+        } else {
+            semana = dias[sem - 1];
+            printf("Dia escolhido: %s\n", semana);
+            break;  // Sai do loop assim que o dia for válido
+        }
+    }
+    
+    // Manipulação de arquivos
+    sprintf(caminho, "%d%d%s", peca, sem, arquivo);
+    arquivoDados = fopen(caminho, "r");
+    if (!arquivoDados) {
+        printf("Erro ao abrir o arquivo para leitura.\n");
+        exit(1);
+    }
+    for (j = 0; j < 40; j++) {
+        fscanf(arquivoDados, "%s", pArq[j]);
+    }
+    fscanf(arquivoDados, "%d %d", &valor, &numIng);
+    fclose(arquivoDados);
+    
+    if (numIng >= 40) {
+        printf("Ingressos esgotados para esta data!\n");
+        goto compra;  // Caso os ingressos tenham acabado, vai voltar para a compra
+    }
+    
+    // Escolha de poltrona
+    char poltEsc[2];
+    int disponivel = 0;
+    while (1) {
+        printf("Escolha uma poltrona: ");
+        scanf("%s", poltEsc);
+        // Converte a poltrona para maiúsculas
+        for (int k = 0; poltEsc[k] != '\0'; k++) {
+            poltEsc[k] = toupper(poltEsc[k]);
+        }
+        disponivel = 0;
+        for (j = 0; j < 40; j++) {
+            if (strcmp(poltEsc, pArq[j]) == 0) {
+                disponivel = 1;
+                strcpy(pArq[j], "xx");  // Marca a poltrona como ocupada
+                break;
+            }
+        }
+        if (disponivel) {
+            printf("Poltrona escolhida: %s\n", poltEsc);
+            break;  // Sai do loop assim que a poltrona for válida
+        } else {
+            printf("Poltrona indisponível! Tente novamente.\n");
+        }
+    }
+
+    // Pagamento
+    while (1) {
+        printf("Tem direito a desconto? (S/N): ");
+        scanf(" %c", &desconto);  // O espaço antes de %c garante que não haja lixo na entrada
+        desconto = toupper(desconto);
+        if (desconto == 'S') {
+            valorIngresso = 50;
+            break;
+        } else if (desconto == 'N') {
+            valorIngresso = 100;
+            break;
+        } else {
+            printf("Entrada inválida. Digite 'S' para sim ou 'N' para não.\n");
+        }
+    }
+
+    printf("Valor do ingresso: R$ %d,00\n", valorIngresso);
+    printf("Confirmar compra? (S/N): ");
+    scanf(" %c", &compra);
+    
+    if (toupper(compra) == 'S') {
+        arquivoDados = fopen(caminho, "w");
+        if (!arquivoDados) {
+            printf("Erro ao abrir o arquivo para escrita.\n");
+            exit(1);
+        }
+        for (j = 0; j < 40; j++) {
+            fprintf(arquivoDados, "%s ", pArq[j]);
+        }
+        fprintf(arquivoDados, " %d %d", valorIngresso + valor, ++numIng);
+        fclose(arquivoDados);
+    
+        system("cls");
+        printf("Compra realizada com sucesso!\n");
+    } else {
+        printf("Compra cancelada!\n");
+    }
+    
+    printf("Nova compra? (S/N): ");
+    scanf(" %c", &novaCompra);
+    if (toupper(novaCompra) == 'S') {
+        goto compra;  // Reinicia o processo de compra
+    }
+    
+    return 0;
+}
